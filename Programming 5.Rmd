@@ -1,0 +1,336 @@
+---
+title: "Programming 5"
+author: "Adejumo Ridwan Suleiman"
+date: '2022-06-11'
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# R programming {#progchapter}
+
+The tools in Chapters  will allow you to manipulate, summarise and visualise your data in all sorts of ways. But what if you need to compute some statistic that there isn't a function for? What if you need automatic checks of your data and results? What if you need to repeat the same analysis for a large number of files? This is where the programming tools you'll learn about in this chapter, like loops and conditional statements, come in handy. And this is where you take the step from being able to use R for routine analyses to being able to use R for _any_ analysis.
+
+After working with the material in this chapter, you will be able to use R to:
+
+* Write your own R functions,
+* Use several new pipe operators,
+* Use conditional statements to perform different operations depending on whether or not a condition is satisfied,
+* Iterate code operations multiple times using loops,
+* Iterate code operations multiple times using functionals,
+* Measure the performance of your R code.
+
+
+### Creating functions {#createfunctions}
+For the sake of the example, let's say that we wish to compute the mean of several vectors but that the function `mean` doesn't exist. We would therefore like to write our own function for computing the mean of a vector. An R function takes some variables as input (arguments or parameters) and returns an object. The definition follows a particular format:
+
+```{r eval=FALSE}
+function_name <- function(argument1, argument2, ...)
+{
+      # ...
+      # Some rows with code that creates some_object
+      # ...
+      return(some_object)
+}
+```
+
+In the case of our function for computing a mean, this could look like:
+
+```{r eval=FALSE}
+average <- function(x)
+{
+      avg <- sum(x)/length(x)
+      return(avg)
+}
+```
+
+This defines a function called `average`, that takes an object called `x` as input. It computes the sum of the elements of `x`, divides that by the number of elements in `x`, and returns the resulting mean.
+
+If we now make a call to `average(x)`, our function will compute the mean value of the vector `x`. Let's try it out, to see that it works:
+
+```{r eval=FALSE}
+x <- 1:100
+y <- 1:200
+average(x)
+average(y)
+```
+
+ 
+
+### Will your function work? {#willfunctionwork}
+It is always a good idea to test if your function works as intended, and to try to figure out what can cause it to break. Let's return to our `average` function:
+
+```{r eval=FALSE}
+average <- function(x)
+{
+      avg <- sum(x)/length(x)
+      return(avg)
+}
+```
+
+We've already seen that it seems to work when the input `x` is a numeric vector. But what happens if we input something else instead?
+
+```{r eval=FALSE}
+average(c(1, 5, 8)) # Numeric input
+average(c(TRUE, TRUE, FALSE)) # Logical input
+average(c("Lady Gaga", "Tool", "Dry the River")) # Character input
+average(data.frame(x = c(1, 1, 1), y = c(2, 2, 1))) # Numeric df
+average(data.frame(x = c(1, 5, 8), y = c("A", "B", "C"))) # Mixed type
+```
+
+The first two of these render the desired output (the `logical` values being represented by 0's and 1's), but the rest don't. Many R functions include checks that the input is of the correct type, or checks to see which method should be applied depending on what data type the input is. We'll learn how to perform such checks in Section \@ref(conditions).
+
+As a side note, it is possible to write functions that don't end with `return`. In that case, the output (i.e. what would be written in the Console if you'd run the code there) from the last line of the function will automatically be returned. I prefer to (almost) always use `return` though, as it is easy to accidentally make the function return nothing by finishing it with a line that yields no output. Below are two examples of how we could have written `average` without a call to `return`. The first doesn't work as intended, because the function's final (and only) line doesn't give any output.
+
+```{r eval=FALSE}
+average_bad <- function(x)
+{
+      avg <- sum(x)/length(x)
+}
+
+average_ok <- function(x)
+{
+      sum(x)/length(x)
+}
+
+average_bad(c(1, 5, 8))
+average_ok(c(1, 5, 8))
+```
+
+### More on arguments
+It is possible to create functions with as many arguments as you like, but it will become quite unwieldy if the user has to supply too many arguments to your function. It is therefore common to provide default values to arguments, which is done by setting a value in the `function` call. Here is an example of a function that computes $x^n$, using $n=2$ as the default:
+
+```{r eval=FALSE}
+power_n <- function(x, n = 2)
+{
+      return(x^n)
+}
+```
+
+If we don't supply `n`, `power_n` uses the default `n = 2`:
+
+```{r eval=FALSE}
+power_n(3)
+```
+
+But if we supply an `n`, `power_n` will use that instead:
+
+```{r eval=FALSE}
+power_n(3, 1)
+power_n(3, 3)
+```
+
+For clarity, you can specify which value corresponds to which argument:
+
+```{r eval=FALSE}
+power_n(x = 2, n = 5)
+```
+
+...and can then even put the arguments in the wrong order:
+
+```{r eval=FALSE}
+power_n(n = 5, x = 2)
+```
+
+However, if we only supply `n` we get an error, because there is no default value for `x`:
+
+```{r eval=FALSE}
+power_n(n = 5)
+```
+
+
+
+
+
+## Checking conditions {#conditions}
+Sometimes you'd like your code to perform different operations depending on whether or not a certain condition is fulfilled. Perhaps you want it to do something different if there is missing data, if the input is a `character` vector, or if the largest value in a `numeric` vector is greater than some number. In Section  you learned how to filter data using conditions. In this section, you'll learn how to use conditional statements for a number of other tasks.
+
+### `if` and `else`
+The most important functions for checking whether a condition is fulfilled are `if` and `else`. The basic syntax is
+
+```{r eval=FALSE}
+if(condition) { do something } else { do something else }
+```
+
+The condition should return a single `logical` value, so that it evaluates to either `TRUE` or `FALSE`. If the condition is fulfilled, i.e. if it is `TRUE`, the code inside the first pair of curly brackets will run, and if it's not (`FALSE`), the code within the second pair of curly brackets will run instead.
+
+As a first example, assume that you want to compute the reciprocal of $x$, $1/x$, unless $x=0$, in which case you wish to print an error message:
+
+```{r eval=FALSE}
+x <- 2
+if(x == 0) { print("Error! Division by zero.") } else { 1/x }
+```
+
+Now try running the same code with `x` set to `0`:
+
+```{r eval=FALSE}
+x <- 0
+if(x == 0) { cat("Error! Division by zero.") } else { 1/x }
+```
+
+Alternatively, we could check if $x\neq 0$ and then change the order of the segments within the curly brackets:
+
+```{r eval=FALSE}
+x <- 0
+if(x != 0) { 1/x } else { print("Error! Division by zero.") }
+```
+
+You don't have to write all of the code on the same line, but you must make sure that the `else` part is on the same line as the first `}`:
+
+```{r eval=FALSE}
+if(x == 0)
+{ 
+    print("Error! Division by zero.")
+} else
+{ 
+    1/x
+}
+```
+
+You can also choose not to have an `else` part at all. In that case, the code inside the curly brackets will run if the condition is satisfied, and if not, nothing will happen:
+
+```{r eval=FALSE}
+x <- 0
+if(x == 0) { cat("x is 0.") }
+
+x <- 2
+if(x == 0) { cat("x is 0.") }
+```
+
+Finally, if you need to check a number of conditions one after another, in order to list different possibilities, you can do so by repeated use of `if` and `else`:
+
+```{r eval=FALSE}
+if(x == 0)
+{ 
+    print("Error! Division by zero.")
+} else if(is.infinite((x)))
+{
+    print("Error! Divison by infinity.")
+} else if(is.na((x)))
+{
+    print("Error! Divison by NA.")
+} else
+{ 
+    1/x
+}
+```
+
+### `&` & `&&`
+Just as when we used conditions for filtering in Sections and , it is possible to combine several conditions into one using `&` (AND) and `|` (OR). However, the `&` and `|` operators are vectorised, meaning that they will return a vector of `logical` values whenever possible. This is not desirable in conditional statements, where the condition must evaluate to a single value. Using a condition that returns a vector results in a warning message:
+
+```{r eval=FALSE}
+# a is a variable that doesn't exist
+
+# Using && works:
+if(exists("a") && a > 0)
+{
+    print("The variable exists and is positive.")
+} else { print("a doesn't exist or is negative.") }
+
+# But using & doesn't, because it attempts to evaluate a>0
+# even though a doesn't exist:
+if(exists("a") & a > 0)
+{
+    print("The variable exists and is positive.")
+} else { print("a doesn't exist or is negative.") }
+```
+
+### `ifelse`
+It is common that you want to assign different values to a variable depending on whether or not a condition is satisfied:
+
+```{r eval=FALSE}
+x <- 2
+
+if(x == 0)
+{ 
+    reciprocal <- "Error! Division by zero."
+} else
+{ 
+    reciprocal <- 1/x
+}
+
+reciprocal
+```
+
+In fact, this situation is so common that there is a special function for it: `ifelse`:
+
+```{r eval=FALSE}
+reciprocal <- ifelse(x == 0, "Error! Division by zero.", 1/x)
+```
+
+`ifelse` evaluates a condition and then returns different answers depending on whether the condition is `TRUE` or `FALSE`. It can also be applied to vectors, in which case it checks the condition for each element of the vector and returns an answer for each element:
+
+```{r eval=FALSE}
+x <- c(-1, 1, 2, -2, 3)
+ifelse(x > 0, "Positive", "Negative")
+```
+
+
+
+### `for` loops {#forloops}
+`for` loops can be used to run the same code several times, with different settings, e.g. different data, in each iteration. Their use is perhaps best explained by some examples. We create the loop using, give the name of a _control variable_ and a vector containing its values (the control variable controls how many iterations to run) and then write the code that should be repeated in each iteration of the loop. In each iteration, a new value of the control variable is used in the code, and the loop stops when all values have been used.
+
+As a first example, let's write a `for` loop that runs a block of code five times, where the block prints the current iteration number:
+
+```{r eval=FALSE}
+for(i in 1:5)
+{
+    print("Iteration", i, "\n")
+}
+```
+
+This is equivalent to writing:
+
+```{r eval=FALSE}
+print("Iteration", 1, "\n")
+print("Iteration", 2, "\n")
+print("Iteration", 3, "\n")
+print("Iteration", 4, "\n")
+print("Iteration", 5, "\n")
+```
+
+The upside is that we didn't have to copy and edit the same code multiple times - and as you can imagine, this benefit becomes even more pronounced if you have more complicated code blocks.
+
+The values for the control variable are given in a vector, and the code block will be run once for each element in the vector - we say the we _loop over the values in the vector_. The vector doesn't have to be `numeric` - here is an example with a `character` vector:
+
+```{r eval=FALSE}
+for(word in c("one", "two", "five hundred and fifty five"))
+{
+    print("Iteration", word, "\n")
+}
+```
+
+Of course, loops are used for so much more than merely printing text on the screen. A common use is to perform some computation and then store the result in a vector. In this case, we must first create an empty vector to store the result in, e.g. using `vector`, which creates an empty vector of a specific type and length:
+
+```{r eval=FALSE}
+squares <- vector("numeric", 5)
+
+for(i in 1:5)
+{
+    squares[i] <- i^2
+}
+squares
+```
+
+
+
+### `while` loops {#whileloop}
+In some situations, we want to run a loop until a certain condition is met, meaning that we don't know in advance how many iterations we'll need. This is more common in numerical optimisation and simulation, but sometimes also occurs in data analyses.
+
+When we don't know in advance how many iterations that are needed, we can use `while`. Unlike `for` loops, that iterate a fixed number of times, `while` loops keep iterating as long as some specified condition is met. Here is an example where the loop keeps iterating until `i` squared is greater than 100:
+
+```{r eval=FALSE}
+i <- 1
+
+while(i^2 <= 100)
+{
+      print(i,"squared is", i^2, "\n")
+      i <- i +1
+}
+
+i
+```
+
+The code block inside the loop keeps repeating until the condition `i^2 <= 100` no longer is satisfied. We have to be a little bit careful with this condition - if we set it in such a way that it is possible that the condition _always_ will be satisfied, the loop will just keep running and running - creating what is known as an _infinite loop_. If you've accidentally created an infinite loop, you can break it by pressing the Stop button at the top of the Console panel in RStudio.
+

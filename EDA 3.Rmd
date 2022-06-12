@@ -1,0 +1,342 @@
+---
+title: "EDA 3"
+author: "Adejumo Ridwan Suleiman"
+date: '2022-06-09'
+output: html_document
+---
+# Exploratory data analysis
+
+Exploratory data analysis (EDA) is a process in which we summarise and visually explore a dataset, which is a collection of methods for finding interesting subgroups and patterns in our data. Unlike statistical hypothesis testing, which is used to reject hypotheses, EDA can be used to _generate_ hypotheses (which can then be confirmed or rejected by new studies). Another purpose of EDA is to find outliers and incorrect observations, which can lead to a cleaner and more useful dataset. In EDA we ask questions about our data and then try to answer them using summary statistics and graphics. Some questions will prove to be important, and some will not. The key to finding important questions is to ask a lot of questions. This chapter will provide you with a wide range of tools for question-asking.
+
+After working with the material in this chapter, you will be able to use R to:
+
+* Create reports using R Markdown,
+* Customise the look of your plots,
+* Visualise the distribution of a variable,
+* Create interactive plots,
+* Detect and label outliers,
+* Investigate patterns in missing data,
+* Visualise trends,
+* Plot time series data,
+* Visualise multiple variables at once using scatterplot matrices, correlograms and bubble plots,
+* Visualise multivariate data using principal component analysis,
+* Use unsupervised learning techniques for clustering,
+* Use factor analysis to find latent variables in your data.
+
+
+## Customising `ggplot2` plots {#themes}
+We'll be using `ggplot2` a lot in this chapter, so before we get started with exploratory analyses, we'll take some time to learn how we can customise the look of `ggplot2`-plots.
+
+## Exploring distributions
+It is often useful to visualise the distribution of a numerical variable. Comparing the distributions of different groups can lead to important insights. Visualising distributions is also essential when checking assumptions used for various statistical tests (sometimes called _initial data analysis_). In this section we will illustrate how this can be done using the `diamonds` data from the `ggplot2` package, which you started to explore in previous chapter.
+
+### Density plots and frequency polygons
+We already know how to visualise the distribution of the data by dividing it into bins and plotting a histogram:
+
+```{r eval=FALSE}
+library(ggplot2)
+ggplot(diamonds, aes(carat)) +
+      geom_histogram(colour = "black")
+```
+
+A similar plot is created using frequency polygons, which uses lines instead of bars to display the counts in the bins:
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(carat)) +
+      geom_freqpoly()
+```
+
+An advantage with frequency polygons is that they can be used to compare groups, e.g. diamonds with different cuts.
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(carat, colour = cut)) +
+      geom_freqpoly()
+```
+
+It is clear from this figure that there are more diamonds with ideal cuts than diamonds with fair cuts in the data. The polygons have roughly the same shape, except perhaps for the polygon for diamonds with fair cuts.
+
+In some cases, we are more interested in the shape of the distribution than in the actual counts in the different bins. Density plots are similar to frequency polygons but show an estimate of the density function of the underlying random variable. These estimates are smooth curves that are scaled so that the area below them is 1 (i.e. scaled to be proper density functions):
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(carat, colour = cut)) +
+      geom_density()
+```
+
+From this figure, it becomes clear that low-carat diamonds tend to have better cuts, which wasn't obvious from the frequency polygons. However, the plot does not provide any information about _how_ common different cuts are. Use density plots if you're more interested in the shape of a variable's distribution, and frequency polygons if you're more interested in counts.
+
+#### Exercise
+Return to the histogram created by `ggplot(diamonds, aes(carat)) + geom_histogram()` above. As there are very few diamonds with carat greater than 3, cut the x-axis at 3. Then decrease the bin width to 0.01. Do any interesting patterns emerge?
+
+### Violin plots
+Density curves can also be used as alternatives to boxplots. In Exercise  you created boxplots to visualise price differences between diamonds of different cuts:
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(cut, price)) +
+      geom_boxplot()
+```
+
+Instead of using a boxplot, we can use a violin plot. 
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(cut, price)) +
+      geom_violin()
+```
+
+Compared to boxplots, violin plots capture the entire distribution of the data rather than just a few numerical summaries. If you like numerical summaries (and you should!) you can add the median and the quartiles (corresponding to the borders of the box in the boxplot) using the `draw_quantiles` argument:
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(cut, price)) +
+      geom_violin(draw_quantiles =  c(0.25, 0.5, 0.75))
+```
+
+
+### Combine multiple plots into a single graphic 
+When exploring data with many variables, you'll often want to make the same kind of plot (e.g. a violin plot) for several variables. It will frequently make sense to place these side-by-side in the same plot window. The `patchwork` package extends `ggplot2` by letting you do just that. Let's install it:
+
+```{r eval=FALSE}
+install.packages("patchwork")
+```
+
+To use it, save each plot as a plot object and then add them together:
+
+```{r eval=FALSE}
+plot1 <- ggplot(diamonds, aes(cut, carat, fill = cut)) +
+            geom_violin() +
+            theme(legend.position = "none")
+plot2 <- ggplot(diamonds, aes(cut, price, fill = cut)) +
+            geom_violin() +
+            theme(legend.position = "none")
+
+library(patchwork)
+plot1 + plot2
+```
+
+You can also arrange the plots on multiple lines, with different numbers of plots on each line. This is particularly useful if you are combining different types of plots in a single plot window. In this case, you separate plots that are same line by `|` and mark the beginning of a new line with `/`:
+
+```{r eval=FALSE}
+# Create two more plot objects:
+plot3 <- ggplot(diamonds, aes(cut, depth, fill = cut)) +
+            geom_violin() +
+            theme(legend.position = "none")
+plot4 <- ggplot(diamonds, aes(carat, fill = cut)) +
+            geom_density(alpha = 0.5) +
+            theme(legend.position = c(0.9, 0.6))
+
+# One row with three plots and one row with a single plot:
+(plot1 | plot2 | plot3) / plot4
+
+# One column with three plots and one column with a single plot:
+(plot1 / plot2 / plot3) | plot4
+```
+
+(You may need to enlarge your plot window for this to look good!)
+
+## Outliers and missing data
+
+### Detecting outliers
+Both boxplots and scatterplots are helpful in detecting deviating observations - often called outliers. Outliers can be caused by measurement errors or errors in the data input but can also be interesting rare cases that can provide valuable insights about the process that generated the data. Either way, it is often of interest to detect outliers, for instance because that may influence the choice of what statistical tests to use.
+
+Let's return to the scatterplot of diamond carats versus prices:
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(carat, price)) +
+      geom_point()
+```
+
+There are some outliers which we may want to study further. For instance, there is a surprisingly cheap 5 carat diamond, and some cheap 3 carat diamonds. But how can we identify those points?
+
+
+### Missing data
+Like many datasets, the mammal sleep data `msleep` contains a lot of missing values, represented by `NA` (Not Available) in R. This becomes evident when we have a look at the data:
+
+```{r eval=FALSE}
+library(ggplot2)
+View(msleep)
+```
+
+We can check if a particular observation is missing using the `is.na` function:
+
+```{r eval=FALSE}
+is.na(msleep$sleep_rem[4])
+is.na(msleep$sleep_rem)
+```
+
+We can count the number of missing values for each variable using:
+
+```{r eval=FALSE}
+colSums(is.na(msleep))
+```
+
+Here, `colSums` computes the sum of `is.na(msleep)` for each column of `msleep` (remember that in summation, `TRUE` counts as `1` and `FALSE` as `0`), yielding the number of missing values for each variable. In total, there are 136 missing values in the dataset:
+
+```{r eval=FALSE}
+sum(is.na(msleep))
+```
+
+You'll notice that `ggplot2` prints a warning in the Console when you create a plot with missing data:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(brainwt, sleep_total)) +
+      geom_point() +
+      scale_x_log10()
+```
+
+Sometimes data are missing simply because the information is not yet available (for instance, the brain weight of the mountain beaver could be missing because no one has ever weighed the brain of a mountain beaver). In other cases, data can be missing because something about them is different (for instance, values for a male patient in a medical trial can be missing because the patient died, or because some values only were collected for female patients). Therefore, it is of interest to see if there are any differences in non-missing variables between subjects that have missing data and subjects that don't.
+
+In `msleep`, all animals have recorded values for `sleep_total` and `bodywt`. To check if the animals that have missing `brainwt` values differ from the others, we can plot them in a different colour in a scatterplot:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(bodywt, sleep_total, colour = is.na(brainwt))) +
+      geom_point() +
+      scale_x_log10()
+```
+
+(If `is.na(brainwt)` is `TRUE` then the brain weight is missing in the dataset.) In this case, there are no apparent differences between the animals with missing data and those without.
+
+### Exploring data
+The `nycflights13`package contains data about flights to and from three airports in New York, USA, in 2013. As a summary exercise, we will study a subset of these, namely all flights departing from New York on 1 January that year:
+
+```{r eval=FALSE}
+install.packages("nycflights13")
+library(nycflights13)
+flights2 <- flights[flights$month == 1 & flights$day == 1,]
+```
+
+```{exercise, label="ch4exc15"}
+Explore the `flights2` dataset, focusing on delays and the amount of time spent in the air. Are there any differences between the different carriers? Are there missing data? Are there any outliers?
+
+```
+
+## Trends in scatterplots
+Let's return to a familiar example - the relationship between animal brain size and sleep times:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(brainwt, sleep_total)) + 
+      geom_point() +
+      xlab("Brain weight (logarithmic scale)") +
+      ylab("Total sleep time") +
+      scale_x_log10()
+```
+
+There appears to be a decreasing trend in the plot. To aid the eye, we can add a smoothed line by adding a new geom, `geom_smooth`, to the figure:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(brainwt, sleep_total)) + 
+      geom_point() +
+      geom_smooth() +
+      xlab("Brain weight (logarithmic scale)") +
+      ylab("Total sleep time") +
+      scale_x_log10()
+```
+
+This technique is useful for bivariate data as well as for time series, which we'll delve into next.
+
+### Visualising periodic data
+Polar coordinates are particularly useful when the data is periodic. Consider for instance the following dataset, describing monthly weather averages for Cape Town, South Africa:
+
+```{r eval=FALSE}
+Cape_Town_weather <- data.frame(
+Month = 1:12,
+Temp_C = c(22, 23, 21, 18, 16, 13, 13, 13, 14, 16, 18, 20),
+Rain_mm = c(20, 20, 30, 50, 70, 90, 100, 70, 50, 40, 20, 20),
+Sun_h = c(11, 10, 9, 7, 6, 6, 5, 6, 7, 9, 10, 11))
+```
+
+We can visualise the monthly average temperature using lines in a Cartesian coordinate system:
+
+```{r eval=FALSE}
+ggplot(Cape_Town_weather, aes(Month, Temp_C)) +
+      geom_line()
+```
+
+What this plot doesn't show is that the 12th month and the 1st month actually are consecutive months. If we instead use polar coordinates, this becomes clearer:
+
+```{r eval=FALSE}
+ggplot(Cape_Town_weather, aes(Month, Temp_C)) +
+      geom_line() +
+      coord_polar()
+```
+
+To improve the presentation, we can change the scale of the x-axis (i.e. the circular axis) so that January and December aren't plotted at the same angle:
+
+```{r eval=FALSE}
+ggplot(Cape_Town_weather, aes(Month, Temp_C)) +
+      geom_line() +
+      coord_polar() +
+      xlim(0, 12)
+```
+
+### Pie charts
+Consider the stacked bar chart that we plotted in Section:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(factor(1), fill = vore)) +
+      geom_bar()
+```
+
+What would happen if we plotted this figure in a polar coordinate system instead? If we map the height of the bars (the y-axis of the Cartesian coordinate system) to both the angle and the radial distance, we end up with a pie chart:
+
+```{r eval=FALSE}
+ggplot(msleep, aes(factor(1), fill = vore)) +
+      geom_bar() +
+      coord_polar(theta = "y")
+```
+
+There are many arguments against using pie charts for visualisations. Most boil down to the fact that the same information is easier to interpret when conveyed as a bar chart. This is at least partially due to the fact that most people are more used to reading plots in Cartesian coordinates than in polar coordinates.
+
+If we make a similar transformation of a grouped bar chart, we get a different type of pie chart, in which the height of the bars are mapped to both the angle and the radial distance:
+
+```{r eval=FALSE}
+# Cartestian bar chart:
+ggplot(msleep, aes(vore, fill = vore)) +
+      geom_bar()
+
+# Polar bar chart:
+ggplot(msleep, aes(vore, fill = vore)) +
+      geom_bar() +
+      coord_polar()
+```
+
+
+### Categorical data
+When visualising a pair of categorical variables, plots similar to those in the previous section prove to be useful. One way of doing this is to use the `geom_count` geom. We illustrate this with an example using `diamonds`, showing how common different combinations of colours and cuts are:
+
+```{r eval=FALSE}
+ggplot(diamonds, aes(color, cut)) +
+      geom_count()
+```
+
+However, it is often better to use colour rather than point size to visualise counts, which we can do using a tile plot. First, we have to compute the counts though, using `aggregate`. We now wish to have two grouping variables, `color` and `cut`, which we can put on the right-hand side of the formula as follows:
+
+```{r eval=FALSE}
+diamonds2 <- aggregate(carat ~ cut + color, data = diamonds,
+                       FUN = length)
+diamonds2
+```
+
+`diamonds2` is now a data frame containing the different combinations of `color` and `cut` along with counts of how many diamonds belong to each combination (labelled `carat`, because we put `carat` in our formula). Let's change the name of the last column from `carat` to `Count`:
+
+```{r eval=FALSE}
+names(diamonds2)[3] <- "Count"
+```
+
+Next, we can plot the counts using `geom_tile`:
+
+```{r eval=FALSE}
+ggplot(diamonds2, aes(color, cut, fill = Count)) +
+      geom_tile()
+```
+
+It is also possible to combine point size and colours:
+
+```{r eval=FALSE}
+ggplot(diamonds2, aes(color, cut, colour = Count, size = Count)) +
+      geom_count()
+```
+
+#### Excercise
+Using the `diamonds` dataset, do the following:
+
+1. Use a plot to find out what the most common combination of cut and clarity is.
+
+2. Use a plot to find out which combination of cut and clarity has the highest average price.

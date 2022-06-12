@@ -1,0 +1,363 @@
+---
+title: "Data Types"
+author: "Adejumo Ridwan Suleiman"
+date: '2022-06-09'
+output: html_document
+---
+
+# Dealing with messy data {#messychapter}
+Real datasets are seldom as tidy and clean as those you have seen in the previous examples in this material. On the contrary, real data is messy. Things will be out of place, and formatted in the wrong way. You'll need to filter the rows to remove those that aren't supposed to be used in the analysis. You'll need to remove some columns and merge others. You will need to wrestle, clean, coerce, and coax your data until it finally has the right format. Only then will you be able to actually analyse it.
+
+After working with the material in this chapter, you will be able to use R to:
+
+* Handle numeric and categorical data,
+* Manipulate and find patterns in text strings,
+* Work with dates and times,
+* Filter, subset, sort, and reshape your data using `data.table`, `dplyr`, and `tidyr`,
+* Split and merge datasets,
+* Scrape data from the web,
+* Import data from different file formats. 
+
+## Changing data types {#coercion}
+R implicitly coerces variables into other data types when needed. For instance, if you add a `numeric` to a `logical`, the result is a `numeric`. And if you place them together in a vector, the vector will contain two `numeric` values:
+
+```{r eval=FALSE}
+TRUE + 5
+v1 <- c(TRUE, 5)
+v1
+```
+
+However, if you add a `numeric` to a `character`, the operation fails. If you put them together in a vector, both become `character` strings:
+
+```{r eval=FALSE}
+"One" + 5
+v2 <- c("One", 5)
+v2
+```
+
+There is a hierarchy for data types in R: `logical` < `integer` < `numeric` < `character`. When variables of different types are somehow combined (with addition, put in the same vector, and so on), R will coerce both to the higher ranking type. That is why `v1` contained `numeric` variables (`numeric` is higher ranked than `logical`) and `v2` contained `character` values (`character` is higher ranked than `numeric`).
+
+Automatic coercion is often useful, but will sometimes cause problems. As an example, a vector of numbers may accidentally be converted to a `character` vector, which will confuse plotting functions. Luckily it is possible to convert objects to other data types. The functions most commonly used for this are `as.logical`, `as.numeric` and `as.character`. Here are some examples of how they can be used:
+
+```{r eval=FALSE}
+as.logical(1)           # Should be TRUE
+as.logical("FALSE")     # Should be FALSE
+as.numeric(TRUE)        # Should be 1
+as.numeric("2.718282")  # Should be numeric 2.718282
+as.character(2.718282)  # Should be the string "2.718282"
+as.character(TRUE)      # Should be the string "TRUE"
+```
+
+A word of warning though - conversion only works if R can find a natural conversion between the types. Here are some examples where conversion fails. Note that only some of them cause warning messages:
+
+```{r eval=FALSE}
+as.numeric("two")                   # Should be 2
+as.numeric("1+1")                   # Should be 2
+as.numeric("2,718282")              # Should be numeric 2.718282
+as.logical("Vaccines cause autism") # Should be FALSE
+```
+
+#### Exercise
+The following tasks are concerned with converting and checking data types:
+
+1. What happens if you apply `as.logical` to the `numeric` values 0 and 1? What happens if you apply it to other numbers?
+  
+2. What happens if you apply `as.character` to a vector containing `numeric` values?
+  
+3. The functions `is.logical`, `is.numeric` and `is.character` can be used to check if a variable is a `logical`, `numeric` or `character`, respectively. What type of object do they return?
+  
+4. Is `NA` a `logical`, `numeric` or `character`?
+
+
+## Working with lists
+A data structure that is very convenient for storing data of different types is `list`. You can think of a `list` as a data frame where you can put different types of objects in each column: like a `numeric` vector of length 5 in the first, a data frame in the second and a single `character` in the third. Here is an example of how to create a `list` using the function of the same name:
+
+```{r eval=FALSE}
+my_list <- list(my_numbers = c(86, 42, 57, 61, 22),
+                my_data = data.frame(a = 1:3, b = 4:6),
+                my_text = "Lists are the best.")
+```
+
+To access the elements in the list, we can use the same `$` notation as for data frames:
+
+```{r eval=FALSE}
+my_list$my_numbers
+my_list$my_data
+my_list$my_text
+```
+
+In addition, we can access them using indices, but using _double_ brackets:
+
+```{r eval=FALSE}
+my_list[[1]]
+my_list[[2]]
+my_list[[3]]
+```
+
+To access elements within the elements of lists, additional brackets can be added. For instance, if you wish to access the second element of the `my_numbers` vector, you can use either of these:
+
+```{r eval=FALSE}
+my_list[[1]][2]
+my_list$my_numbers[2]
+```
+
+
+### Splitting vectors into lists {#splitvector}
+Consider the `airquality` dataset, which among other things describe the temperature on each day during a five-month period. Suppose that we wish to split the `airquality$Temp` vector into five separate vectors: one for each month. We could do this by repeated filtering, e.g.
+
+```{r eval=FALSE}
+temp_may <- airquality$Temp[airquality$Month == 5]
+temp_june <- airquality$Temp[airquality$Month == 6]
+# ...and so on.
+```
+
+Apart from the fact that this isn't a very good-looking solution, this would be infeasible if we needed to split our vector into a larger number of new vectors. Fortunately, there is a function that allows us to split the vector by month, storing the result as a list - `split`\index{\texttt{split}}\index{vector!split}:
+
+```{r eval=FALSE}
+temps <- split(airquality$Temp, airquality$Month)
+temps
+
+# To access the temperatures for June:
+temps$`6`
+temps[[2]]
+
+# To give more informative names to the elements in the list:
+names(temps) <- c("May", "June", "July", "August", "September")
+temps$June
+```
+
+Note that, in breach of the rules for variable names in R, the original variable names here were numbers (actually `character` variables that happened to contain numeric characters). When accessing them using `$` notation, you need to put them between backticks (`` ` ``), e.g. `` temps$`6` ``, to make it clear that `6` is a variable name and not a number.
+
+### Collapsing lists into vectors
+Conversely, there are times where you want to collapse a list into a vector. This can be done using `unlist`:
+
+```{r eval=FALSE}
+unlist(temps)
+```
+
+
+#### Exercise
+Load the `vas.csv` data from Exercise above. Split the `VAS` vector so that you get a list containing one vector for each patient. How can you then access the VAS values for patient 212?
+
+## Working with numbers
+A lot of data analyses involve numbers, which typically are represented as `numeric` values in R. We've already seen in Section  that there are numerous mathematical operators that can be applied to numbers in R. But there are also other functions that come in handy when working with numbers.
+
+### Rounding numbers
+At times you may want to round numbers, either for presentation purposes or for some other reason. There are several functions that can be used for this:
+
+```{r eval=FALSE}
+a <- c(2.1241, 3.86234, 4.5, -4.5, 10000.1001)
+round(a, 3)           # Rounds to 3 decimal places
+signif(a, 3)          # Rounds to 3 significant digits
+ceiling(a)            # Rounds up to the nearest integer
+floor(a)              # Rounds down to the nearest integer
+trunc(a)              # Rounds to the nearest integer, toward 0
+                      # (note the difference in how 4.5
+                      #  and -4.5 are treated!)
+```
+
+### Sums and means in data frames
+When working with numerical data, you'll frequently find yourself wanting to compute sums or means of either columns or rows of data frames. The `colSums`, `rowSums`, `colMeans` and `rowMeans` functions can be used to do this. Here is an example with an expanded version of the `bookstore` data, where three purchases have been recorded for each customer:
+
+```{r eval=FALSE}
+bookstore2 <- data.frame(purchase1 = c(20, 59, 2, 12, 22, 160,
+                                       34, 34, 29),
+                         purchase2 = c(14, 67, 9, 20, 20, 81,
+                                       19, 55, 8),
+                         purchase3 = c(4, 62, 11, 18, 33, 57,
+                                       24, 49, 29))
+
+colSums(bookstore2)   # The total amount for customers' 1st, 2nd and
+                      # 3rd purchases
+rowSums(bookstore2)   # The total amount for each customer
+colMeans(bookstore2)  # Mean purchase for 1st, 2nd and 3rd purchases
+rowMeans(bookstore2)  # Mean purchase for each customer
+```
+
+Moving beyond sums and means, in Section you'll learn how to apply any function to the rows or columns of a data frame.
+
+
+
+### Scientific notation `1e-03`
+When printing very large or very small numbers, R uses _scientific notation_\index{scientific notation}, meaning that $7,000,000$ (7 followed by 6 zeroes) is displayed as (the mathematically equivalent) $7\cdot 10^6$ and $0.0000007$ is displayed as $7\cdot 10^{-7}$. Well, almost, the _ten raised to the power of x_ bit isn't really displayed as $10^x$, but as `e+x`\index{\texttt{e+}}, a notation used in many programming languages and calculators. Here are some examples:
+
+```{r eval=FALSE}
+7000000
+0.0000007
+7e+07
+exp(30)
+```
+
+Scientific notation is a convenient way to display large numbers, but it's not always desirable. If you just want to print the number, the `format` function can be used to convert it to a character, suppressing scientific notation:
+
+```{r eval=FALSE}
+format(7000000, scientific = FALSE)
+```
+
+If you still want your number to be a `numeric` (as you often do), a better choice is to change the option for when R uses scientific notation. This can be done using the `scipen` argument in the `options` function:
+
+```{r eval=FALSE}
+options(scipen = 1000)
+7000000
+0.0000007
+7e+07
+exp(30)
+```
+
+To revert this option back to the default, you can use:
+
+```{r eval=FALSE}
+options(scipen = 0)
+7000000
+0.0000007
+7e+07
+exp(30)
+```
+
+Note that this option only affects how R _prints_ numbers, and not how they are treated in computations.
+
+### Floating point arithmetics
+
+```{r eval=FALSE}
+1.1 - 0.2
+```
+
+## Working with factors {#factors}
+Categorical data is stored in R as `factor`\index{\texttt{factor}} variables. You may ask why a special data structure is needed for categorical data, when we could just use `character` variables to represent the categories. Indeed, the latter is what R does by default, e.g. when creating a `data.frame` object or reading data from `.csv` and `.xlsx` files.
+
+Let's say that you've conducted a survey on students' smoking habits. The possible responses are _Never_, _Occasionally_, _Regularly_ and _Heavy_. From 10 students, you get the following responses:
+
+```{r eval=FALSE}
+smoke <- c("Never", "Never", "Heavy", "Never", "Occasionally",
+           "Never", "Never", "Regularly", "Regularly", "No")
+```
+
+Note that the last answer is invalid - `No` was not one of the four answers that were allowed for the question.
+
+You could use `table` to get a summary of how many answers of each type that you got:
+
+```{r eval=FALSE}
+table(smoke)
+```
+
+But the categories are not presented in the correct order! There is a clear order between the different categories, _Never_ < _Occasionally_ < _Regularly_ < _Heavy_, but `table` doesn't present the results in that way. Moreover, R didn't recognise that `No` was an invalid answer, and treats it just the same as the other categories.
+
+This is where `factor` variables come in. They allow you to specify which values your variable can take, and the ordering between them (if any). 
+
+### Creating factors
+When creating a `factor` variable, you typically start with a `character`, `numeric` or `logical` variable, the values of which are turned into categories. To turn the `smoke` vector that you created in the previous section into a `factor`, you can use the `factor` function: 
+
+```{r eval=FALSE}
+smoke2 <- factor(smoke)
+```
+
+You can inspect the elements, and _levels_\index{\texttt{levels}}, i.e. the values that the categorical variable takes, as follows:
+
+```{r eval=FALSE}
+smoke2
+levels(smoke2)
+```
+
+So far, we haven't solved neither the problem of the categories being in the wrong order nor that invalid `No` value. To fix both these problems, we can use the `levels` argument in `factor`:
+
+```{r eval=FALSE}
+smoke2 <- factor(smoke, levels = c("Never", "Occasionally",
+                                   "Regularly", "Heavy"),
+                        ordered = TRUE)
+
+# Check the results:
+smoke2
+levels(smoke2)
+table(smoke2)
+```
+
+You can control the order in which the levels are presented by choosing which order we write them in in the `levels` argument. The `ordered = TRUE` argument specifies that the order of the variables is _meaningful_. It can be excluded in cases where you wish to specify the order in which the categories should be presented purely for presentation purposes (e.g. when specifying whether to use the order `Male/Female/Other` or `Female/Male/Other`). Also note that the `No` answer now became an `NA`, which in the case of `factor` variables represents both missing observations and invalid observations. To find the values of `smoke` that became `NA` in `smoke2` you can use `which` and `is.na`:
+
+```{r eval=FALSE}
+smoke[which(is.na(smoke2))]
+```
+
+By checking the original values of the `NA` elements, you can see if they should be excluded from the analysis or recoded into a proper category (`No` could for instance be recoded into `Never`). In Section \@ref(regexp) you'll learn how to replace values in larger datasets automatically using regular expressions.
+
+### Changing factor levels {#factorlevels}
+When we created `smoke2`, one of the elements became an `NA`. `NA` was however not included as a level of the `factor`. Sometimes it is desirable to include `NA` as a level, for instance when you want to analyse rows with missing data. This is easily done using the `addNA`function:
+
+```{r eval=FALSE}
+smoke2 <- addNA(smoke2)
+```
+
+If you wish to change the name of one or more of the `factor` levels, you can do it directly via the `levels` function. For instance, we can change the name of the `NA` category, which is the 5th level of `smoke2`, as follows:
+
+```{r eval=FALSE}
+levels(smoke2)[5] <- "Invalid answer"
+```
+
+The above solution is a little brittle in that it relies on specifying the index of the level name, which can change if we're not careful. More robust solutions using the `data.table` and `dplyr` packages are presented in Section \@ref(recodedplyr).
+
+Finally, if you've added more levels than what are actually used, these can be dropped using the `droplevels` function:
+
+```{r eval=FALSE}
+smoke2 <- factor(smoke, levels = c("Never", "Occasionally",
+                                   "Regularly", "Heavy",
+                                   "Constantly"),
+                        ordered = TRUE)
+levels(smoke2)
+smoke2 <- droplevels(smoke2)
+levels(smoke2)
+```
+
+### Changing the order of levels
+Now suppose that we'd like the levels of the `smoke2` variable to be presented in the reverse order: _Heavy_, _Regularly_, _Occasionally_, and _Never_.\index{\texttt{factor}!change order of levels} This can be done by a new call to `factor`, where the new level order is specified in the `levels` argument:
+
+```{r eval=FALSE}
+smoke2 <- factor(smoke2, levels = c("Heavy", "Regularly",
+                                    "Occasionally", "Never"))
+
+# Check the results:
+levels(smoke2)
+```
+
+
+### Combining levels
+Finally, `levels` can be used to merge categories by replacing their separate names with a single name.\index{\texttt{factor}!combine levels} For instance, we can combine the smoking categories _Occasionally_, _Regularly_, and _Heavy_ to a single category named _Yes_. Assuming that these are first, second and third in the list of names (as will be the case if you've run the last code chunk above), here's how to do it:
+
+```{r eval=FALSE}
+levels(smoke2)[1:3] <- "Yes"
+
+# Check the results:
+levels(smoke2)
+```
+
+Alternative ways to do this are presented in Section.
+
+#### Exercise
+In Exercise \@ref(exr:ch3exc3b) you learned how to create a `factor` variable from a `numeric` variable using `cut`,do the following:
+
+1. Change the category names to `Mild`, `Moderate` and `Hot`.
+
+2. Combine `Moderate` and `Hot` into a single level named `Hot`.
+
+
+
+#### Exercise
+Load the `msleep` data from the `ggplot2` package. Note that categorical variable `vore` is stored as a `character`. Convert it to a `factor` by running `msleep$vore <- factor(msleep$vore)`.
+
+1. How are the resulting factor levels ordered? Why are they ordered in that way?
+  
+2. Compute the mean value of `sleep_total` for each `vore` group.
+
+3. Sort the factor levels according to their `sleep_total` means. Hint: this can be done manually, or more elegantly using e.g. a combination of the functions `rank` in an intermediate step.
+
+## Working with strings {#strings}
+Text in R is represented by `character` strings. These are created using double or single quotes. I recommend double quotes for three reasons. First, it is the default in R, and is the recommended style (see e.g. `?Quotes`). Second, it improves readability - code with double quotes is easier to read because double quotes are easier to spot than single quotes. Third, it will allow you to easily use apostrophes in your strings, which single quotes don't (because apostrophes will be interpreted as the end of the string). Single quotes can however be used if you need to include double quotes inside your string:
+
+```{r eval=FALSE}
+# This works:
+text1 <- "An example of a string. Isn't this great?"
+text2 <- 'Another example of a so-called "string".'
+
+# This doesn't work:
+text1_fail <- 'An example of a string. Isn't this great?'
+text2_fail <- "Another example of a so-called "string"."
+```
+
