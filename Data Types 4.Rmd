@@ -111,7 +111,7 @@ temp_june <- airquality$Temp[airquality$Month == 6]
 # ...and so on.
 ```
 
-Apart from the fact that this isn't a very good-looking solution, this would be infeasible if we needed to split our vector into a larger number of new vectors. Fortunately, there is a function that allows us to split the vector by month, storing the result as a list - `split`\index{\texttt{split}}\index{vector!split}:
+Apart from the fact that this isn't a very good-looking solution, this would be infeasible if we needed to split our vector into a larger number of new vectors. Fortunately, there is a function that allows us to split the vector by month, storing the result as a list - `split`:
 
 ```{r eval=FALSE}
 temps <- split(airquality$Temp, airquality$Month)
@@ -223,7 +223,7 @@ Note that this option only affects how R _prints_ numbers, and not how they are 
 ```
 
 ## Working with factors {#factors}
-Categorical data is stored in R as `factor`\index{\texttt{factor}} variables. You may ask why a special data structure is needed for categorical data, when we could just use `character` variables to represent the categories. Indeed, the latter is what R does by default, e.g. when creating a `data.frame` object or reading data from `.csv` and `.xlsx` files.
+Categorical data is stored in R as `factor` variables. You may ask why a special data structure is needed for categorical data, when we could just use `character` variables to represent the categories. Indeed, the latter is what R does by default, e.g. when creating a `data.frame` object or reading data from `.csv` and `.xlsx` files.
 
 Let's say that you've conducted a survey on students' smoking habits. The possible responses are _Never_, _Occasionally_, _Regularly_ and _Heavy_. From 10 students, you get the following responses:
 
@@ -251,7 +251,7 @@ When creating a `factor` variable, you typically start with a `character`, `nume
 smoke2 <- factor(smoke)
 ```
 
-You can inspect the elements, and _levels_\index{\texttt{levels}}, i.e. the values that the categorical variable takes, as follows:
+You can inspect the elements, and _levels_, i.e. the values that the categorical variable takes, as follows:
 
 ```{r eval=FALSE}
 smoke2
@@ -307,7 +307,7 @@ levels(smoke2)
 ```
 
 ### Changing the order of levels
-Now suppose that we'd like the levels of the `smoke2` variable to be presented in the reverse order: _Heavy_, _Regularly_, _Occasionally_, and _Never_.\index{\texttt{factor}!change order of levels} This can be done by a new call to `factor`, where the new level order is specified in the `levels` argument:
+Now suppose that we'd like the levels of the `smoke2` variable to be presented in the reverse order: _Heavy_, _Regularly_, _Occasionally_, and _Never_.This can be done by a new call to `factor`, where the new level order is specified in the `levels` argument:
 
 ```{r eval=FALSE}
 smoke2 <- factor(smoke2, levels = c("Heavy", "Regularly",
@@ -319,7 +319,7 @@ levels(smoke2)
 
 
 ### Combining levels
-Finally, `levels` can be used to merge categories by replacing their separate names with a single name.\index{\texttt{factor}!combine levels} For instance, we can combine the smoking categories _Occasionally_, _Regularly_, and _Heavy_ to a single category named _Yes_. Assuming that these are first, second and third in the list of names (as will be the case if you've run the last code chunk above), here's how to do it:
+Finally, `levels` can be used to merge categories by replacing their separate names with a single name.For instance, we can combine the smoking categories _Occasionally_, _Regularly_, and _Heavy_ to a single category named _Yes_. Assuming that these are first, second and third in the list of names (as will be the case if you've run the last code chunk above), here's how to do it:
 
 ```{r eval=FALSE}
 levels(smoke2)[1:3] <- "Yes"
@@ -331,7 +331,6 @@ levels(smoke2)
 Alternative ways to do this are presented in Section.
 
 #### Exercise
-In Exercise \@ref(exr:ch3exc3b) you learned how to create a `factor` variable from a `numeric` variable using `cut`,do the following:
 
 1. Change the category names to `Mild`, `Moderate` and `Hot`.
 
@@ -348,7 +347,7 @@ Load the `msleep` data from the `ggplot2` package. Note that categorical variabl
 
 3. Sort the factor levels according to their `sleep_total` means. Hint: this can be done manually, or more elegantly using e.g. a combination of the functions `rank` in an intermediate step.
 
-## Working with strings {#strings}
+## Working with strings
 Text in R is represented by `character` strings. These are created using double or single quotes. I recommend double quotes for three reasons. First, it is the default in R, and is the recommended style (see e.g. `?Quotes`). Second, it improves readability - code with double quotes is easier to read because double quotes are easier to spot than single quotes. Third, it will allow you to easily use apostrophes in your strings, which single quotes don't (because apostrophes will be interpreted as the end of the string). Single quotes can however be used if you need to include double quotes inside your string:
 
 ```{r eval=FALSE}

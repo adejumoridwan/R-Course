@@ -18,11 +18,11 @@ After working with the material in this chapter, you will be able to use R to:
 * Use several new pipe operators,
 * Use conditional statements to perform different operations depending on whether or not a condition is satisfied,
 * Iterate code operations multiple times using loops,
-* Iterate code operations multiple times using functionals,
+* Iterate code operations multiple times using functional,
 * Measure the performance of your R code.
 
 
-### Creating functions {#createfunctions}
+### Creating functions
 For the sake of the example, let's say that we wish to compute the mean of several vectors but that the function `mean` doesn't exist. We would therefore like to write our own function for computing the mean of a vector. An R function takes some variables as input (arguments or parameters) and returns an object. The definition follows a particular format:
 
 ```{r eval=FALSE}
@@ -79,7 +79,7 @@ average(data.frame(x = c(1, 1, 1), y = c(2, 2, 1))) # Numeric df
 average(data.frame(x = c(1, 5, 8), y = c("A", "B", "C"))) # Mixed type
 ```
 
-The first two of these render the desired output (the `logical` values being represented by 0's and 1's), but the rest don't. Many R functions include checks that the input is of the correct type, or checks to see which method should be applied depending on what data type the input is. We'll learn how to perform such checks in Section \@ref(conditions).
+The first two of these render the desired output (the `logical` values being represented by 0's and 1's), but the rest don't. Many R functions include checks that the input is of the correct type, or checks to see which method should be applied depending on what data type the input is. We'll learn how to perform such checks in Section .
 
 As a side note, it is possible to write functions that don't end with `return`. In that case, the output (i.e. what would be written in the Console if you'd run the code there) from the last line of the function will automatically be returned. I prefer to (almost) always use `return` though, as it is easy to accidentally make the function return nothing by finishing it with a line that yields no output. Below are two examples of how we could have written `average` without a call to `return`. The first doesn't work as intended, because the function's final (and only) line doesn't give any output.
 

@@ -28,7 +28,7 @@ Choose a _download mirror_, i.e. a server to download the software from. I recom
 
 The version of R that you should download is called the (base) binary. Download and run it to install R. You may see mentions of 64-bit and 32-bit versions of R; if you have a modern computer (which in this case means a computer from 2010 or later), you should go with the 64-bit version.
 
-You have now installed the R programming language. Working with it is easier with an _integrated development environment_, or IDE for short, which allows you to easily write, run and debug your code. This book is written for use with the RStudio IDE, but 99.9 % of it will work equally well with other IDE's, like Emacs with ESS or Jupyter notebooks.
+You have now installed the R programming language. Working with it is easier with an _integrated development environment_, or IDE for short, which allows you to easily write, run and debug your code.
 
 To download RStudio, go to the RStudio download page
 
@@ -91,7 +91,7 @@ To run a part of the script, first select the lines you wish to run, e.g. by hig
 * Press the Run button at the upper right corner of the Script panel.
 * Press Ctrl+Enter on your keyboard (this is how I usually do it!).
 
-To save your script, click the Save icon, choose _File > Save_ in the menu or press Ctrl+S. R script files should have the file extension `.R`, e.g. `My first R script.R`. Remember to save your work often, and to save your code for all the examples and exercises in this book - you will likely want to revisit old examples in the future, to see how something was done.
+To save your script, click the Save icon, choose _File > Save_ in the menu or press Ctrl+S. R script files should have the file extension `.R`, e.g. `My first R script.R`. Remember to save your work often, and to save your code for all the examples and exercises.
 
 
 
@@ -152,7 +152,7 @@ However, you can not place a space in the middle of the `<-` arrow. The followin
 x < - 1 + 2 + 3 + 4
 ```
 
-Running that piece of code rendered the output `FALSE`. This is because `< -` with a space has a different meaning than `<-` in R, one that we shall return to in the next chapter.
+Running that piece of code rendered the output `FALSE`. This is because `< -` with a space has a different meaning than `<-` in R.
 
 In rare cases, you may want to switch the direction of the arrow, so that the variable names is on the right-hand side. This is called right-assignment and works just fine too:
 
@@ -318,7 +318,7 @@ Depending on the size of your Console panel, R will require a different number o
 [27] 5989 9030 5532 9623
 ```
 
-or, if you have a narrower panel,
+or, if you have a narrower panel.
 
 ```{r eval=FALSE}
 > distances
@@ -330,8 +330,6 @@ or, if you have a narrower panel,
 ```
 
 The numbers within the square brackets - `[1]`, `[8]`, `[15]`, and so on - tell us which _elements_ of the vector that are printed first on each row. So in the latter example, the first element in the vector is `687`, the 8th element is `5712`, the 15th element is `2730`, and so forth. Those numbers, called the _indices_ of the elements, aren't exactly part of your data, but as we'll see later they are useful for keeping track of it.
-
-This also tells you something about the inner workings of R. The fact that 
 
 ```{r eval=FALSE}
 x <- 4
@@ -656,20 +654,17 @@ proportions(table(msleep$vore, msleep$conservation),
 
 #### Exercise
 
-```{exercise, label="ch2exc1"}
 Load `ggplot2` using `library(ggplot2)` if you have not already done so. Then do the following:
 1. View the documentation for the `diamonds` data and read about different the variables.
 2. Check the data structures: how many observations and variables are there and what type of variables (numeric, categorical, etc.) are there?
 3. Compute summary statistics (means, median, min, max, counts for categorical variables). Are there any missing values?
-```
-`r if (knitr::is_html_output()) '[(Click here to go to the solution.)]' else '[]'`(#solutions1)
 
 ## Plotting numerical data
 There are several different approaches to creating plots with R. In this sections, we will mainly focus on creating plots using the `ggplot2` package, which allows us to create good-looking plots using the so-called _grammar of graphics_. The grammar of graphics is a set of structural rules that helps us establish a language for graphics. The beauty of this is that (almost) all plots will be created with functions that all follow the same logic, or grammar. That way, we don't have to learn new arguments for each new plot. You can compare this to the problems we encountered when we wanted to ignore `NA` values when computing descriptive statistics - `mean` required the argument `na.rm` whereas `cor` required the argument `use`. By using a common grammar for all plots, we reduce the number of arguments that we need to learn.\index{numerical data}
 
 The three key components to grammar of graphics plots are:
 
-* **Data**: the observations in your dataset,
+* **Data**: the observations in your dataset.
 * **Aesthetics**: mappings from the data to visual properties (like axes and sizes of geometric objects), and
 * **Geoms**: geometric objects, e.g. lines, representing what you see in the plot.
 
@@ -808,10 +803,8 @@ ggplot(msleep, aes(brainwt, sleep_total, colour = vore)) +
 ```
 
 
-```{exercise, label="ch2exc5"}
+### Exercise
 Using the `msleep` data, create a plot of log-transformed body weight versus log-transformed brain weight. Use total sleep time to set the colours of the points. Change the text on the axes to something informative.
-```
-
 
 ### Boxplots
 Another option for comparing groups is boxplots (also called box-and-whiskers plots). Using `ggplot2`, we create boxplots for animal sleep times, grouped by feeding behaviour, with `geom_boxplot`. Using base R, we use the `boxplot`} function instead:
@@ -842,16 +835,14 @@ Note that just as for a scatterplot, the code consists of three parts:
 
 * **Data**: given by the first argument in the call to `ggplot`: `msleep`
 * **Aesthetics**: given by the second argument in the `ggplot` call: `aes`, where we map the group variable `vore` to the x-axis and the numerical variable `sleep_total` to the y-axis.
-* **Geoms**: given by `geom_boxplot`, meaning that the data will be visualised with boxplots.\newline
+* **Geoms**: given by `geom_boxplot`, meaning that the data will be visualised with boxplots.
 
-
-```{exercise, label="ch2exc7"}
+#### Exercise
 Using the `diamonds` data, do the following:
 1. Create boxplots of diamond prices, grouped by `cut`.
 2. Read the documentation for `geom_boxplot`. How can you change the colours of the boxes and their outlines?
 3. Replace `cut` by `reorder(cut, price, median)` in\index{\texttt{reorder}} the plot's aestethics. What does `reorder` do? What is the result?
 4. Add `geom_jitter(size = 0.1, alpha = 0.2)` to\index{\texttt{geom\_jitter}} the plot. What happens?
-```
 
 ### Histograms
 To show the distribution of a continuous variable, we can use a histogram, in which the data is split into a number of bins and the number of observations in each bin is shown by a bar. The `ggplot2` code for histograms follows the same pattern as other plots, while the base R code uses the `hist` function:
@@ -873,16 +864,14 @@ As before, the three parts in the `ggplot2` code are:
 
 * **Data**: given by the first argument in the call to `ggplot`: `msleep`
 * **Aesthetics**: given by the second argument in the `ggplot` call: `aes`, where we map `sleep_total` to the x-axis.
-* **Geoms**: given by `geom_histogram`, meaning that the data will be visualised by a histogram.\newline
+* **Geoms**: given by `geom_histogram`, meaning that the data will be visualised by a histogram.
 
-
-```{exercise, label="ch2exc8"}
+#### Exercise
 Using the `diamonds` data, do the following:
   
 1. Create a histogram of diamond prices.
 2. Create histograms of diamond prices for different cuts, using facetting.
 3. Add a suitable argument to `geom_histogram` to add black outlines around the bars^[Personally, I don't understand why anyone would ever plot histograms without outlines!].
-```
 
 
 ## Plotting categorical data {#catdata2}

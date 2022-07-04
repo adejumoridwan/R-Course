@@ -1,0 +1,15 @@
+---
+title: "Statistics 6"
+author: "Adejumo Ridwan Suleiman"
+date: '2022-06-13'
+output: html_document
+---
+
+## T-Tests
+### One Sample T-tests
+Using the diamonds dataset, we want to see if the 
+```{r}
+library(ggplot2)
+head(diamonds)
+```
+
